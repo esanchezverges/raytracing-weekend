@@ -1,5 +1,12 @@
 use crate::{interval::Interval, vec3::Vec3, vec3::Vec3 as Color};
 
+fn linear_to_gamma(color: f64) -> f64 {
+    if color > 0.0 {
+        return color.sqrt();
+    }
+    color
+}
+
 pub fn write_color(pixel_color: Color) {
     let r = pixel_color.x();
     let g = pixel_color.y();
@@ -29,9 +36,13 @@ pub fn write_colors(v: &Vec<Vec<Vec3>>) {
 }
 
 pub fn save_color(v: &mut Vec<Vec3>, i: usize, pixel_color: Color) {
-    let r = pixel_color.x();
-    let g = pixel_color.y();
-    let b = pixel_color.z();
+    let mut r = pixel_color.x();
+    let mut g = pixel_color.y();
+    let mut b = pixel_color.z();
+
+    r = linear_to_gamma(r);
+    g = linear_to_gamma(g);
+    b = linear_to_gamma(b);
 
     let intensity: Interval = Interval {
         min: 0.0,

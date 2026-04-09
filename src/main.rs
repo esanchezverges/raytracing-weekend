@@ -32,7 +32,7 @@ fn main() {
     });
     world.add(Sphere {
         center: Point::new(0.0, -100.5, -1.0),
-        radius: 100.0,
+        radius: 100.4,
     });
 
     let mut camera: Camera = Camera::default();
