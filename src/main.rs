@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use env_logger::Env;
 use log::info;
 
@@ -40,7 +42,7 @@ fn main() {
     camera.initialize();
 
     //Render
-    camera.render(&world);
+    camera.render(Arc::new(world));
 
     info!("Done");
 }

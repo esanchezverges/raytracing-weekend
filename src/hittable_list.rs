@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::{
     hittable::{HitRecord, Hittable},
     interval::Interval,
@@ -6,15 +8,15 @@ use crate::{
 
 #[derive(Default)]
 pub struct HittableList {
-    pub objects: Vec<Box<dyn Hittable>>,
+    pub objects: Vec<Arc<dyn Hittable + Send + Sync>>,
 }
 
 impl HittableList {
     pub fn clear(&mut self) {
         self.objects.clear();
     }
-    pub fn add<T: Hittable + 'static>(&mut self, o: T) {
-        self.objects.push(Box::new(o));
+    pub fn add<T: Hittable + Sync + Send + 'static>(&mut self, o: T) {
+        self.objects.push(Arc::new(o));
     }
 }
 

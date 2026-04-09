@@ -1,6 +1,11 @@
+use std::{
+    sync::Arc,
+    thread::{self, JoinHandle},
+};
+
 use crate::{
     Vec3, Vec3 as Point, Vec3 as Color,
-    color::write_color,
+    color::{self, save_color, write_colors},
     hittable::{HitRecord, Hittable},
     hittable_list::HittableList,
     interval::Interval,
@@ -9,7 +14,7 @@ use crate::{
 use log::info;
 use rand::RngExt;
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Camera {
     pub center: Point,
     pub image_width: i32,
@@ -20,6 +25,7 @@ pub struct Camera {
     image_height: i32,
     pub samples_per_pixel: i32,
     pixel_samples_scale: f64,
+    pub saved_colors: Vec<Vec3>,
 }
 
 impl Camera {
@@ -46,21 +52,45 @@ impl Camera {
         self.pixel_samples_scale = 1.0 / self.samples_per_pixel as f64;
     }
 
-    pub fn render(&self, world: &HittableList) {
+    pub fn render(&self, world: Arc<HittableList>) {
         println!("P3\n{0} {1}\n255", self.image_width, self.image_height);
+        //let colors: Arc<Vec<Vec<Vec3>>> =
+        //Arc::new(vec![
+        //vec![Vec3::default(); self.image_width as usize];
+        //self.image_height as usize
+        //]);
+        let mut colors =
+            vec![vec![Vec3::default(); self.image_width as usize]; self.image_height as usize];
+
+        let mut threads: Vec<JoinHandle<(usize, Vec<Vec3>)>> = vec![];
         for j in 0..self.image_height {
-            info!("Scanlines remaining: {0} ", self.image_height - j);
-            for i in 0..self.image_width {
-                let mut pixel_color: Color = Color::new(0.0, 0.0, 0.0);
-                let mut s: i32 = 0;
-                for _ in 0..self.samples_per_pixel {
-                    let r = self.get_ray(i, j);
-                    pixel_color += self.ray_color(&r, world);
-                    s += 1;
+            let camera = Arc::new(self.clone());
+            let world = Arc::clone(&world.clone());
+            threads.push(thread::spawn(move || {
+                let mut result: Vec<Vec3> = vec![Vec3::default(); camera.image_width as usize];
+                for i in 0..camera.image_width {
+                    let mut pixel_color: Color = Color::new(0.0, 0.0, 0.0);
+                    let mut s: i32 = 0;
+                    for _ in 0..camera.samples_per_pixel {
+                        let r = camera.get_ray(i, j);
+                        pixel_color += camera.ray_color(&r, &world);
+                        s += 1;
+                    }
+                    let color_to_print = pixel_color / s as f64;
+                    save_color(&mut result, i as usize, color_to_print);
                 }
-                write_color(pixel_color / s as f64);
-            }
+                info!("Finished line: {0} ", j);
+                (j as usize, result)
+            }));
         }
+
+        for t in threads {
+            let (j, v) = t.join().unwrap();
+            colors[j] = v;
+            info!("Agreggating line: {0} ", j);
+        }
+
+        write_colors(&colors);
     }
 
     fn get_ray(&self, i: i32, j: i32) -> Ray {
