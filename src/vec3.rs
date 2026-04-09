@@ -1,5 +1,7 @@
 use std::ops::{self, Index};
 
+use rand::RngExt;
+
 #[derive(Clone, Copy)]
 pub struct Vec3 {
     e: [f64; 3],
@@ -48,6 +50,38 @@ impl Vec3 {
 
     pub fn print(&self) {
         println!("{0} {1} {2}", self.e[0], self.e[1], self.e[2]);
+    }
+    pub fn random() -> Self {
+        let mut rng = rand::rng();
+        Self {
+            e: [rng.random(), rng.random(), rng.random()],
+        }
+    }
+    pub fn random_range(min: f64, max: f64) -> Self {
+        let mut rng = rand::rng();
+        Self {
+            e: [
+                rng.random_range(min..max),
+                rng.random_range(min..max),
+                rng.random_range(min..max),
+            ],
+        }
+    }
+    pub fn random_unit_vector() -> Self {
+        loop {
+            let q = Vec3::random_range(-1.0, 1.0);
+            let lensq = q.length_squared();
+            if 1e-160 < lensq && lensq <= 1.0 {
+                return q / lensq.sqrt();
+            }
+        }
+    }
+    pub fn random_on_hemisphere(normal: &Vec3) -> Self {
+        let on_unit_sphere = Vec3::random_unit_vector();
+        if dot(&on_unit_sphere, normal) > 0.0 {
+            return on_unit_sphere;
+        }
+        on_unit_sphere * -1.0
     }
 }
 

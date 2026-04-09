@@ -18,12 +18,12 @@ pub fn write_color(pixel_color: Color) {
 }
 
 pub fn write_colors(v: &Vec<Vec<Vec3>>) {
+    use std::io::{self, Write};
+    let stdout = io::stdout();
+    let mut out = io::BufWriter::new(stdout.lock());
     for j in v.iter() {
         for i in j.iter() {
-            let rbyte = i.x();
-            let gbyte = i.y();
-            let bbyte = i.z();
-            println!("{0} {1} {2}", rbyte, gbyte, bbyte);
+            writeln!(out, "{} {} {}", i.x() as i32, i.y() as i32, i.z() as i32).unwrap();
         }
     }
 }

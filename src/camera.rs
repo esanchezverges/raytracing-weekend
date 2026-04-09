@@ -25,7 +25,7 @@ pub struct Camera {
     image_height: i32,
     pub samples_per_pixel: i32,
     pixel_samples_scale: f64,
-    pub saved_colors: Vec<Vec3>,
+    max_depth: i32,
 }
 
 impl Camera {
@@ -50,15 +50,11 @@ impl Camera {
 
         self.pixel00_loc = viewport_upper_left + (self.pixel_delta_u + self.pixel_delta_v) * 0.5;
         self.pixel_samples_scale = 1.0 / self.samples_per_pixel as f64;
+        self.max_depth = 10;
     }
 
     pub fn render(&self, world: Arc<HittableList>) {
         println!("P3\n{0} {1}\n255", self.image_width, self.image_height);
-        //let colors: Arc<Vec<Vec<Vec3>>> =
-        //Arc::new(vec![
-        //vec![Vec3::default(); self.image_width as usize];
-        //self.image_height as usize
-        //]);
         let mut colors =
             vec![vec![Vec3::default(); self.image_width as usize]; self.image_height as usize];
 
@@ -73,7 +69,7 @@ impl Camera {
                     let mut s: i32 = 0;
                     for _ in 0..camera.samples_per_pixel {
                         let r = camera.get_ray(i, j);
-                        pixel_color += camera.ray_color(&r, &world);
+                        pixel_color += camera.ray_color(&r, &world, camera.max_depth);
                         s += 1;
                     }
                     let color_to_print = pixel_color / s as f64;
@@ -110,17 +106,22 @@ impl Camera {
         Vec3::new(x - 0.5, y - 0.5, 0.0)
     }
 
-    pub fn ray_color(&self, r: &Ray, world: &HittableList) -> Color {
+    pub fn ray_color(&self, r: &Ray, world: &HittableList, depth: i32) -> Color {
+        if depth < 0 {
+            return Color::new(0.0, 0.0, 0.0);
+        }
         let mut rec: HitRecord = HitRecord::default();
         if world.hit(
             r,
             &Interval {
-                min: 0.0,
+                min: 0.0001,
                 max: f64::INFINITY,
             },
             &mut rec,
         ) {
-            return (rec.normal + Color::new(1.0, 1.0, 1.0)) * 0.5;
+            let direction = Vec3::random_on_hemisphere(&rec.normal);
+            return self.ray_color(&Ray::new(rec.p, direction), world, depth - 1) * 0.5;
+            //return (rec.normal + Color::new(1.0, 1.0, 1.0)) * 0.5;
         }
 
         let unit_direction = r.direction();
