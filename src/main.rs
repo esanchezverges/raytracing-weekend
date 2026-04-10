@@ -5,14 +5,17 @@ use log::info;
 
 use crate::camera::Camera;
 use crate::hittable_list::HittableList;
+use crate::material::{Lambertian, Material};
 use crate::sphere::Sphere;
 use crate::vec3::Vec3 as Point;
 use crate::vec3::Vec3;
+use crate::vec3::Vec3 as Color;
 mod camera;
 mod color;
 mod hittable;
 mod hittable_list;
 mod interval;
+mod material;
 mod ray;
 mod rtweekend;
 mod sphere;
@@ -26,13 +29,19 @@ fn main() {
     env_logger::init_from_env(env);
 
     let mut world: HittableList = HittableList::default();
+    let mat = Lambertian {
+        albedo: Color::new(0.4, 0.0, 0.0),
+    };
+    let mat: Arc<dyn Material + Send + Sync> = Arc::new(mat);
     world.add(Sphere {
         center: Point::new(0.0, 0.0, -1.0),
         radius: 0.5,
+        mat: Arc::clone(&mat),
     });
     world.add(Sphere {
         center: Point::new(0.0, -100.5, -1.0),
-        radius: 100.4,
+        radius: 100.0,
+        mat: Arc::clone(&mat),
     });
 
     let mut camera: Camera = Camera::default();

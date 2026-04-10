@@ -15,25 +15,24 @@ impl HittableList {
     pub fn clear(&mut self) {
         self.objects.clear();
     }
+
     pub fn add<T: Hittable + Sync + Send + 'static>(&mut self, o: T) {
         self.objects.push(Arc::new(o));
     }
 }
 
 impl Hittable for HittableList {
-    fn hit(&self, r: &Ray, ray_t: &Interval, rec: &mut HitRecord) -> bool {
-        let mut temp_rec: HitRecord = HitRecord::default();
-        let mut hit_anything: bool = false;
-        let mut t_min_closest_so_far = Interval::new(ray_t.min, ray_t.max);
+    fn hit(&self, r: &Ray, ray_t: &Interval) -> Option<HitRecord> {
+        let mut closest_so_far = ray_t.max;
+        let mut result = None;
 
         for o in self.objects.iter() {
-            if o.hit(r, &t_min_closest_so_far, &mut temp_rec) {
-                hit_anything = true;
-                t_min_closest_so_far.max = temp_rec.t;
-                *rec = temp_rec.clone();
+            if let Some(rec) = o.hit(r, &Interval::new(ray_t.min, closest_so_far)) {
+                closest_so_far = rec.t;
+                result = Some(rec);
             }
         }
 
-        hit_anything
+        result
     }
 }

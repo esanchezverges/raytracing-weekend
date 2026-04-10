@@ -6,7 +6,7 @@ use std::{
 use crate::{
     Vec3, Vec3 as Point, Vec3 as Color,
     color::{self, save_color, write_colors},
-    hittable::{HitRecord, Hittable},
+    hittable::Hittable,
     hittable_list::HittableList,
     interval::Interval,
     ray::Ray,
@@ -110,18 +110,19 @@ impl Camera {
         if depth < 0 {
             return Color::new(0.0, 0.0, 0.0);
         }
-        let mut rec: HitRecord = HitRecord::default();
-        if world.hit(
+        if let Some(rec) = world.hit(
             r,
             &Interval {
                 min: 0.0001,
                 max: f64::INFINITY,
             },
-            &mut rec,
         ) {
-            let direction = rec.normal + Vec3::random_unit_vector();
-            return self.ray_color(&Ray::new(rec.p, direction), world, depth - 1) * 0.7;
-            //return (rec.normal + Color::new(1.0, 1.0, 1.0)) * 0.5;
+            let mut scattered: Ray = Ray::default();
+            let mut attenuation: Vec3 = Vec3::default();
+            if rec.mat.scatter(r, &rec, &mut attenuation, &mut scattered) {
+                return attenuation * self.ray_color(&scattered, world, depth - 1);
+            }
+            return Color::new(0.0, 0.0, 0.0);
         }
 
         let unit_direction = r.direction();
