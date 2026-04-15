@@ -5,7 +5,7 @@ use log::info;
 
 use crate::camera::Camera;
 use crate::hittable_list::HittableList;
-use crate::material::{Lambertian, Material};
+use crate::material::{Dielectric, Lambertian, Material, Metal};
 use crate::sphere::Sphere;
 use crate::vec3::Vec3 as Point;
 use crate::vec3::Vec3;
@@ -30,7 +30,7 @@ fn main() {
 
     let mut world: HittableList = HittableList::default();
     let mat = Lambertian {
-        albedo: Color::new(0.4, 0.0, 0.0),
+        albedo: Color::new(0.1, 0.2, 0.5),
     };
     let mat: Arc<dyn Material + Send + Sync> = Arc::new(mat);
     world.add(Sphere {
@@ -38,16 +38,48 @@ fn main() {
         radius: 0.5,
         mat: Arc::clone(&mat),
     });
+    let mat = Lambertian {
+        albedo: Color::new(0.8, 0.8, 0.0),
+    };
+    let mat: Arc<dyn Material + Send + Sync> = Arc::new(mat);
     world.add(Sphere {
         center: Point::new(0.0, -100.5, -1.0),
         radius: 100.0,
+        mat: Arc::clone(&mat),
+    });
+    let mat = Metal {
+        albedo: Color::new(0.8, 0.8, 0.8),
+        fuzz: 0.0,
+    };
+    let mat: Arc<dyn Material + Send + Sync> = Arc::new(mat);
+    world.add(Sphere {
+        center: Point::new(1.0, 0.0, -1.0),
+        radius: 0.5,
+        mat: Arc::clone(&mat),
+    });
+    let mat = Dielectric {
+        refraction_index: 1.5,
+    };
+    let mat: Arc<dyn Material + Send + Sync> = Arc::new(mat);
+    world.add(Sphere {
+        center: Point::new(-1.0, 0.0, -1.0),
+        radius: 0.5,
+        mat: Arc::clone(&mat),
+    });
+    let mat = Dielectric {
+        refraction_index: 1.00 / 1.50,
+    };
+    let mat: Arc<dyn Material + Send + Sync> = Arc::new(mat);
+    world.add(Sphere {
+        center: Point::new(-1.0, 0.0, -1.0),
+        radius: 0.4,
         mat: Arc::clone(&mat),
     });
 
     let mut camera: Camera = Camera::default();
     camera.aspect_ratio = 16.0 / 9.0;
     camera.image_width = 400;
-    camera.samples_per_pixel = 100;
+    camera.samples_per_pixel = 1000;
     camera.initialize();
 
     //Render

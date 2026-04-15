@@ -22,6 +22,17 @@ pub fn dot(o: &Vec3, u: &Vec3) -> f64 {
     o.e[0] * u.e[0] + o.e[1] * u.e[1] + o.e[2] * u.e[2]
 }
 
+pub fn refract(uv: &Vec3, n: &Vec3, etai_over_etat: f64) -> Vec3 {
+    let cos_theta = f64::min(dot(&(*uv * -1.0), n), 1.0);
+    let r_out_perp = (*uv + (*n * cos_theta)) * etai_over_etat;
+    let r_out_parallel = *n * -f64::sqrt(f64::abs(1.0 - r_out_perp.length_squared()));
+    r_out_perp + r_out_parallel
+}
+
+pub fn reflect(v: &Vec3, n: &Vec3) -> Vec3 {
+    *v - (*n * dot(v, n) * 2.0)
+}
+
 #[allow(unused)]
 impl Vec3 {
     pub fn new(x: f64, y: f64, z: f64) -> Self {
@@ -88,9 +99,6 @@ impl Vec3 {
     pub fn near_zero(&self) -> bool {
         let s = 1e-8;
         (f64::abs(self.e[0]) < s) && (f64::abs(self.e[1]) < s) && (f64::abs(self.e[2]) < s)
-    }
-    pub fn reflect(v: &Vec3, n: &Vec3) -> Vec3 {
-        *v - (*n * dot(v, n) * 2.0)
     }
 }
 
