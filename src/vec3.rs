@@ -33,6 +33,28 @@ pub fn reflect(v: &Vec3, n: &Vec3) -> Vec3 {
     *v - (*n * dot(v, n) * 2.0)
 }
 
+pub fn cross(u: &Vec3, v: &Vec3) -> Vec3 {
+    Vec3::new(
+        u.e[1] * v.e[2] - u.e[2] * v.e[1],
+        u.e[2] * v.e[0] - u.e[0] * v.e[2],
+        u.e[0] * v.e[1] - u.e[1] * v.e[0],
+    )
+}
+
+pub fn random_unit_in_disk() -> Vec3 {
+    loop {
+        let mut rand = rand::rng();
+        let p = Vec3::new(
+            rand.random_range(-1.0..1.0),
+            rand.random_range(-1.0..1.0),
+            0.0,
+        );
+        if p.length_squared() < 1.0 {
+            return p;
+        }
+    }
+}
+
 #[allow(unused)]
 impl Vec3 {
     pub fn new(x: f64, y: f64, z: f64) -> Self {
